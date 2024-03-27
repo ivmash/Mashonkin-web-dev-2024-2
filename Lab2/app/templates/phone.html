@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h1>Проверка номера телефона</h1>
+
+<form method="POST" class="row g-3 needs-validation" novalidate>
+    <div class="col-md-6">
+        <input type="text" name="number" class="form-control {% if error %}is-invalid{% else %}is-valid{% endif %}" value="{{ number }}" required>
+        {% if error %}
+            <div class="invalid-feedback">{{ error }}</div>
+        {% else %}
+            <div class="valid-feedback">Номер правильный</div>
+        {% endif %}
+    </div>
+    <div class="col-12">
+        <button type="submit" class="btn btn-primary">Проверить</button>
+    </div>
+</form>
+
+{% endblock %}
