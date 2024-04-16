@@ -49,9 +49,10 @@ def phone():
             if c not in "0123456789 ()-.+":
                 error = "Номер содержит недопустимые символы"
 
-        if number.startswith("+7") or number.startswith("8"):
-            number = f"+7 ({ns[1:4]}) {ns[4:7]}-{ns[7:9]}-{ns[9:]}"
-        else:
-            number = f"{ns[0:3]}.{ns[3:6]}.{ns[6:8]}.{ns[8:]}"
+        if error == '':
+            if number.startswith("+7") or number.startswith("8"):
+                number = f"8-{ns[1:4]}-{ns[4:7]}-{ns[7:9]}-{ns[9:]}"
+            else:
+                number = f"8-{ns[0:3]}-{ns[3:6]}-{ns[6:8]}-{ns[8:]}"
 
     return render_template("phone.html", error=error, number=number)
