@@ -1,0 +1,49 @@
+{% macro book_action(book, genres, action) %}
+
+<div class="d-flex justify-content-center">
+    <div class="w-50">
+        <form method="POST" enctype="multipart/form-data" >
+            <div class="form-group my-2">
+                <label for="book-name">Название</label>
+                <input name="book-name" type="text" class="form-control" id="book-name">
+            </div>
+            <div class="form-group my-2">
+                <label for="book-description">Описание</label>
+                <textarea name="book-description" class="form-control" id="book-description" rows="3"></textarea>
+            </div>
+            <div class="form-group my-2">
+                <label for="book-year">Год</label>
+                <input name="book-year" type="text" class="form-control" id="book-year">
+            </div>
+            <div class="form-group my-2">
+                <label for="book-publishing-house">Издательство</label>
+                <input name="book-publishing-house" type="text" class="form-control" id="book-publishing-house">
+            </div>
+            <div class="form-group my-2">
+                <label for="book-author">Автор</label>
+                <input name="book-author" type="text" class="form-control" id="book-author">
+            </div>
+            <div class="form-group my-2">
+                <label for="book-pages">Количество страниц</label>
+                <input name="book-pages" type="text" class="form-control" id="book-pages">
+            </div>
+            <div class="form-group my-2">
+                <label for="book-genres">Жанры</label>
+                <select multiple name="book-genres" class="form-control" id="book-genres">
+                    {% for genre in genres %}     
+                    <option value="{{ genre.name }}">{{ genre.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% if action=="add" %}
+            <div class="form-group my-2">
+                <label for="book-cover">Обложка книги</label><br>
+                <input name="book-cover" type="file" class="form-control-file" id="book-cover">
+              </div>
+              {% endif %}
+            <input type="submit" class="btn btn-dark my-2" value="Отправить">
+        </form>
+    </div>
+</div>
+
+{% endmacro %}

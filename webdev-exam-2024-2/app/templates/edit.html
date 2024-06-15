@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+{% from 'book_action.html' import book_action %}
+
+{% block content %}
+
+{{ book_action(book, genres, 'edit') }}
+
+{% endblock %}

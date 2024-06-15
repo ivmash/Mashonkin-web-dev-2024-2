@@ -10,7 +10,7 @@
     <title>Электронная библиотека</title>
 </head>
 
-<body>
+<body>  
     <header class="p-3 text-bg-dark">
         <div class="container">
             <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
@@ -24,9 +24,9 @@
                 <div class="text-end d-flex">
                     {% if current_user.is_authenticated %}
                         <div class="my-2 mx-4">{{ current_user.full_name }}</div>
-                        <a href="{{ url_for('logout') }}" class="btn btn-outline-light me-2">Выход</a>
+                        <a href="{{ url_for('logout') }}" class="btn btn-outline-light me-2">Выйти</a>
                     {% else %}
-                        <a href="{{ url_for('login') }}" class="btn btn-outline-light me-2">Выйти</a>
+                        <a href="{{ url_for('login') }}" class="btn btn-outline-light me-2">Войти</a>
                     {% endif %}
                 </div>
             </div>

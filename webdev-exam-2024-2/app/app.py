@@ -1,9 +1,10 @@
 from flask import Flask, render_template, flash, request, redirect, url_for, session
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
 import datetime
+import hashlib
+import os
 from werkzeug.security import check_password_hash
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.dialects.mysql import YEAR
 
 app = Flask(__name__)
 app.config.from_pyfile('config.py')
@@ -20,6 +21,9 @@ class Books(db.Model):
     author = db.Column(db.VARCHAR(100)) # VARCHAR
     pages = db.Column(db.INT) # INT
     cover = db.Column(db.INT, db.ForeignKey('covers.id')) # Внешний ключ
+    
+    reviews = db.relationship('Reviews', backref='books', uselist=True)
+    genres = db.relationship('BooksAndGenres', backref='books', uselist=True)
 
     def __repr__(self):
         return f"<books {self.id}>"
@@ -124,10 +128,70 @@ def load_user(user_id):
     user = db.session.execute(db.select(Users).filter_by(id=user_id)).scalar()
     return user
 
+
 @app.route('/')
 def index():
-    print()
-    return render_template('index.html')
+    books = Books.query.order_by(Books.year).all()
+    return render_template('index.html', books=books)
+
+
+@app.route('/add', methods=['GET','POST'])
+@login_required
+def add():
+    if request.method == 'POST':
+        try:    
+            name = request.form.get('book-name'),
+            description = request.form.get('book-description'),
+            year =  request.form.get('book-year'),
+            publishing_house = request.form.get('book-publishing-house'),
+            author = request.form.get('book-author'),
+            pages =  request.form.get('book-pages'),
+            genres = request.form.getlist('book-genres'),
+            image = request.files.get('book-cover')
+            
+            print(name, description, year, publishing_house, author, pages, image, genres)
+            
+            image_name = image.filename
+            image_content = image.read() 
+            print(image_content)
+            image_hash = hashlib.md5(image_content).hexdigest()
+            image_mimetype = image.mimetype
+            image_in_db = Covers.query.filter(Covers.md5_hash==image_hash).first()
+            
+            print(image_name, image_hash, image_mimetype, image_in_db, )
+            
+            # Сохранение обложки или получение её из бд
+            if (image_in_db == None):
+                cover = Covers(
+                    name = image_name,
+                    mime_type = image_mimetype,
+                    md5_hash = image_hash
+                )
+                print("asdfasdf")
+                db.session.add(cover)
+                db.session.flush()
+                db.session.commit()
+                id = cover.id
+            else:
+                id = image_in_db.id
+            
+            print("Сохранено: ", id)   
+        
+            if (image_in_db == None):
+                with open(os.path.join(app.config['UPLOAD_FOLDER'], image_name), "wb") as f:
+                    f.write(image_content)
+            # db.session.add(book)
+            # db.session.flush()
+            # db.session.commit()
+        except:
+            db.session.rollback()
+            flash("При сохранении данных возникла ошибка. Проверьте корректность введённых данных.", "danger")
+            return render_template('add.html', genres=genres)
+        return redirect(url_for('index'))
+    else:
+        genres = Genres.query.all()
+        return render_template('add.html', genres=genres)
+
 
 @app.route('/login', methods=['GET','POST'])
 def login():
