@@ -3,6 +3,7 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, login_
 import datetime
 import hashlib
 import os
+import bleach
 from werkzeug.security import check_password_hash
 from flask_sqlalchemy import SQLAlchemy
 import traceback
@@ -132,26 +133,40 @@ def load_user(user_id):
 
 @app.route('/')
 def index():
+    genres = Genres.query.all()
     books = Books.query.order_by(Books.year).all()
-    return render_template('index.html', books=books)
+    return render_template('index.html', books=books, genres=genres)
 
+@app.route('/view/<int:id>')
+def view(id):
+    book = Books.query.filter(Books.id==id).first()
+    return render_template('view.html', book=book)
+
+@app.route('/edit/<int:id>')
+def edit(id):
+    genres = Genres.query.all()
+    book = Books.query.filter(Books.id==id).first()
+    return render_template('edit.html', book=book, genres=genres)
 
 @app.route('/add', methods=['GET','POST'])
 @login_required
 def add():
+    genres = Genres.query.all()
+    print(genres)
     if request.method == 'POST':
         try:    
             # поля формы
             name = request.form.get('book-name')
             description = request.form.get('book-description')
-            year =  request.form.get('book-year')+"-01-01"
+            description = bleach.clean(description)
+            year =  request.form.get('book-year')
             publishing_house = request.form.get('book-publishing-house')
             author = request.form.get('book-author')
             pages =  request.form.get('book-pages')
-            genres = request.form.getlist('book-genres')
+            book_genres = request.form.getlist('book-genres')
             image = request.files.get('book-cover')
             
-            print(name, description, year, publishing_house, author, pages, image, genres)
+            print(name, description, year, publishing_house, author, pages, image, book_genres)
             
             # данные для добавления картинки
             image_name = image.filename
@@ -193,19 +208,33 @@ def add():
             print("Book id ", book.id)
             db.session.commit()
             
+            for genre in genres: #"проза" 
+                if genre.name in book_genres:
+                    db.session.add(BooksAndGenres(book=book.id, genre=genre.id))
+            
+            db.session.flush()
+            db.session.commit()
             # сохраняем файл если предыдущие шаги успешны
             if (image_in_db == None):
                 with open(os.path.join(app.config['UPLOAD_FOLDER'], image_name), "wb") as f:
                     f.write(image_content)
+                    
+            return redirect(url_for('index'))
         except Exception as e: 
-            traceback.print_exc()
             db.session.rollback()
+            book = Books(
+                name = name,
+                description = description,
+                year = year,
+                publishing_house = publishing_house,
+                author = author,
+                pages = pages,
+                cover = 1 # наш ключ обложки
+            )
             flash("При сохранении данных возникла ошибка. Проверьте корректность введённых данных.", "danger")
-            return render_template('add.html', genres=genres)
-        return redirect(url_for('index'))
+            return render_template('add.html', book=book, genres=genres)
     else:
-        genres = Genres.query.all()
-        return render_template('add.html', genres=genres)
+        return render_template('add.html', book='', genres=genres)
 
 
 @app.route('/login', methods=['GET','POST'])

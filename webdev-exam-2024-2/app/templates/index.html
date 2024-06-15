@@ -25,13 +25,24 @@
                             <!-- запись -->
                             <tr class="align-middle">
                                 <td>{{ book.name }}</td>
-                                <td>{{ book.genre }}</td>
+                                <td>
+                                    <!-- таблица books_and_genres -->
+                                    {% for bg in book.genres %} 
+                                    <!-- таблица genres -->
+                                        {% for g in genres %}
+                                        <!-- связь -->
+                                            {% if bg.genre==g.id %}
+                                                <span>{{g.name}}</span>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endfor %}
+                                </td>
                                 <td> <span class="d-inline-block align-middle">{{ book.year }}</span></td>
                                 <td><span>{{ 5 }}</span></td>
                                 <td>{{ 2 }}</td>
                                 <td class="text-end">
-                                    <a class="btn">Просмотр</a>
-                                    <a class="btn">Редактирование</a>
+                                    <a href="{{ url_for('view', id=book.id) }}" class="btn">Просмотр</a>
+                                    <a href="{{ url_for('edit', id=book.id) }}" class="btn">Редактирование</a>
                                     <a class="btn">Удаление</a>
                                 </td>
                             </tr>
