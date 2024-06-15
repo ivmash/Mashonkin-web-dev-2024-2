@@ -5,6 +5,7 @@ import hashlib
 import os
 from werkzeug.security import check_password_hash
 from flask_sqlalchemy import SQLAlchemy
+import traceback
 
 app = Flask(__name__)
 app.config.from_pyfile('config.py')
@@ -140,25 +141,26 @@ def index():
 def add():
     if request.method == 'POST':
         try:    
-            name = request.form.get('book-name'),
-            description = request.form.get('book-description'),
-            year =  request.form.get('book-year'),
-            publishing_house = request.form.get('book-publishing-house'),
-            author = request.form.get('book-author'),
-            pages =  request.form.get('book-pages'),
-            genres = request.form.getlist('book-genres'),
+            # поля формы
+            name = request.form.get('book-name')
+            description = request.form.get('book-description')
+            year =  request.form.get('book-year')+"-01-01"
+            publishing_house = request.form.get('book-publishing-house')
+            author = request.form.get('book-author')
+            pages =  request.form.get('book-pages')
+            genres = request.form.getlist('book-genres')
             image = request.files.get('book-cover')
             
             print(name, description, year, publishing_house, author, pages, image, genres)
             
+            # данные для добавления картинки
             image_name = image.filename
             image_content = image.read() 
-            print(image_content)
             image_hash = hashlib.md5(image_content).hexdigest()
             image_mimetype = image.mimetype
             image_in_db = Covers.query.filter(Covers.md5_hash==image_hash).first()
             
-            print(image_name, image_hash, image_mimetype, image_in_db, )
+            print(image_name, image_hash, image_mimetype, image_in_db)
             
             # Сохранение обложки или получение её из бд
             if (image_in_db == None):
@@ -167,23 +169,36 @@ def add():
                     mime_type = image_mimetype,
                     md5_hash = image_hash
                 )
-                print("asdfasdf")
                 db.session.add(cover)
                 db.session.flush()
                 db.session.commit()
-                id = cover.id
+                cover_id = cover.id
             else:
-                id = image_in_db.id
+                cover_id = image_in_db.id
             
-            print("Сохранено: ", id)   
-        
+            print("Обложка", cover_id)
+            # книга для бд
+            book = Books(
+                name = name,
+                description = description,
+                year = year,
+                publishing_house = publishing_house,
+                author = author,
+                pages = pages,
+                cover = cover_id # наш ключ обложки
+            )
+                        
+            db.session.add(book)
+            db.session.flush()
+            print("Book id ", book.id)
+            db.session.commit()
+            
+            # сохраняем файл если предыдущие шаги успешны
             if (image_in_db == None):
                 with open(os.path.join(app.config['UPLOAD_FOLDER'], image_name), "wb") as f:
                     f.write(image_content)
-            # db.session.add(book)
-            # db.session.flush()
-            # db.session.commit()
-        except:
+        except Exception as e: 
+            traceback.print_exc()
             db.session.rollback()
             flash("При сохранении данных возникла ошибка. Проверьте корректность введённых данных.", "danger")
             return render_template('add.html', genres=genres)
