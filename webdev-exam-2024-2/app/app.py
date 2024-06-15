@@ -147,6 +147,7 @@ def edit(id):
     genres = Genres.query.all()
     if request.method == "POST":
         try:
+            #  форма
             name = request.form.get('book-name')
             description = request.form.get('book-description')
             description = bleach.clean(description)
@@ -156,16 +157,29 @@ def edit(id):
             pages =  request.form.get('book-pages')
             book_genres = request.form.getlist('book-genres')
             
+            # объект книги
             book = db.session.query(Books).get(id)
             
+            # новые поля книги
             book.name = name
             book.description = description
             book.year = year
             book.publishing_house = publishing_house
             book.author = author
             book.pages = pages
-            print("sdf")
             db.session.commit()
+            
+            # новые жанры
+            old_genres = db.session.query(BooksAndGenres).filter(BooksAndGenres.book==book.id).all()
+            if old_genres:
+                for old_g in old_genres:
+                    db.session.delete(old_g)
+                db.session.flush()
+            for genre in genres: 
+                if genre.name in book_genres:
+                    db.session.add(BooksAndGenres(book=book.id, genre=genre.id))
+            db.session.commit()   
+        
             return redirect(url_for('index'))
         except Exception as e: 
             traceback.print_exc()
