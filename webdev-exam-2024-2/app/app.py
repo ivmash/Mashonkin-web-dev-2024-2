@@ -142,11 +142,48 @@ def view(id):
     book = Books.query.filter(Books.id==id).first()
     return render_template('view.html', book=book)
 
-@app.route('/edit/<int:id>')
+@app.route('/edit/<int:id>', methods=['GET','POST'])
 def edit(id):
     genres = Genres.query.all()
-    book = Books.query.filter(Books.id==id).first()
-    return render_template('edit.html', book=book, genres=genres)
+    if request.method == "POST":
+        try:
+            name = request.form.get('book-name')
+            description = request.form.get('book-description')
+            description = bleach.clean(description)
+            year =  request.form.get('book-year')
+            publishing_house = request.form.get('book-publishing-house')
+            author = request.form.get('book-author')
+            pages =  request.form.get('book-pages')
+            book_genres = request.form.getlist('book-genres')
+            
+            book = db.session.query(Books).get(id)
+            
+            book.name = name
+            book.description = description
+            book.year = year
+            book.publishing_house = publishing_house
+            book.author = author
+            book.pages = pages
+            print("sdf")
+            db.session.commit()
+            return redirect(url_for('index'))
+        except Exception as e: 
+            traceback.print_exc()
+            db.session.rollback()
+            book = Books(
+                name = name,
+                description = description,
+                year = year,
+                publishing_house = publishing_house,
+                author = author,
+                pages = pages,
+                cover = 1 # наш ключ обложки
+            )
+            flash("При сохранении данных возникла ошибка. Проверьте корректность введённых данных.", "danger")
+            return render_template('edit.html', book=book, genres=genres)
+    else:
+        book = Books.query.filter(Books.id==id).first()
+        return render_template('edit.html', book=book, genres=genres)
 
 @app.route('/add', methods=['GET','POST'])
 @login_required
