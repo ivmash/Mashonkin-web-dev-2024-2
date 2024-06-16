@@ -9,7 +9,8 @@
             </div>
             <div class="form-group my-2">
                 <label for="book-description">Описание</label>
-                <textarea name="book-description" class="form-control" id="book-description" rows="3">{{book.description or ''}}</textarea>
+                <textarea name="book-description" class="form-control" id="book-description"
+                    rows="3">{{book.description or ''}}</textarea>
                 <script>
                     const easyMDE = new EasyMDE({ element: document.getElementById('book-description') });
                 </script>
@@ -20,11 +21,13 @@
             </div>
             <div class="form-group my-2">
                 <label for="book-publishing-house">Издательство</label>
-                <input name="book-publishing-house" type="text" class="form-control" id="book-publishing-house" value="{{book.publishing_house or ''}}">
+                <input name="book-publishing-house" type="text" class="form-control" id="book-publishing-house"
+                    value="{{book.publishing_house or ''}}">
             </div>
             <div class="form-group my-2">
                 <label for="book-author">Автор</label>
-                <input name="book-author" type="text" class="form-control" id="book-author" value="{{book.author or ''}}">
+                <input name="book-author" type="text" class="form-control" id="book-author"
+                    value="{{book.author or ''}}">
             </div>
             <div class="form-group my-2">
                 <label for="book-pages">Количество страниц</label>

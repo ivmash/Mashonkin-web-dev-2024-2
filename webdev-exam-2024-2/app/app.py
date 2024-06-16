@@ -145,6 +145,9 @@ def view(id):
     book = Books.query.filter(Books.id==id).first()
     genres = Genres.query.all()
     html_description = markdown.markdown(book.description)
+    print(html_description.split('\n'))
+    html_description = '<br>'.join(html_description.split('\n'))
+    print(html_description)
     return render_template('view.html', book=book, genres=genres, html_description=html_description)
 
 @app.route('/edit/<int:id>', methods=['GET','POST'])

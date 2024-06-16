@@ -4,13 +4,23 @@
 
 <div class="container">
     <div class="row">
-        <h1 class="col-12" >{{ book.name }}</h1>
-    </div>
-    <div class="row">
         <div class="col-6">
             <img class="w-100" src="{{ url_for('static', filename='covers/'+book.cover_image.name) }}" alt="">
         </div>
         <div class="col-6">
+            <h3>{{ book.name }}, {{ book.author }}, {{ book.publishing_house }}, {{ book.year }} г., {{ book.pages }} стр.</h3>
+            <h5>
+                Жанры: 
+                {% for bg in book.genres %} 
+                <!-- таблица genres -->
+                    {% for g in genres %}
+                    <!-- связь -->
+                        {% if bg.genre==g.id %}
+                            <span>{{g.name}}</span>
+                        {% endif %}
+                    {% endfor %}
+                {% endfor %}
+            </h5>
             {{ html_description | safe }}
         </div>
     </div>
