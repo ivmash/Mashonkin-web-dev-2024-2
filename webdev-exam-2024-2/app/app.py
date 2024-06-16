@@ -150,6 +150,23 @@ def view(id):
     print(html_description)
     return render_template('view.html', book=book, genres=genres, html_description=html_description)
 
+@app.route('/delete/<int:id>')
+@login_required
+def delete(id):
+    try:
+        print(f"Delete {id}")
+        book = db.session.query(Books).get(id)
+        db.session.delete(book)
+        db.session.flush()
+        db.session.commit()   
+        flash("Книга успешно удалена.", "success")
+    except: 
+        traceback.print_exc()
+        db.session.rollback()
+        flash("При удалении возникла ошибка.", "danger")
+    
+    return redirect(url_for('index'))
+
 @app.route('/edit/<int:id>', methods=['GET','POST'])
 def edit(id):
     genres = Genres.query.all()
