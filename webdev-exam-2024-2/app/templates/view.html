@@ -2,6 +2,18 @@
 
 {% block content %}
 
-{{ book.name }}
+<div class="container">
+    <div class="row">
+        <h1 class="col-12" >{{ book.name }}</h1>
+    </div>
+    <div class="row">
+        <div class="col-6">
+            <img class="w-100" src="{{ url_for('static', filename='covers/'+book.cover_image.name) }}" alt="">
+        </div>
+        <div class="col-6">
+            {{ html_description | safe }}
+        </div>
+    </div>
+</div>
 
 {% endblock %}

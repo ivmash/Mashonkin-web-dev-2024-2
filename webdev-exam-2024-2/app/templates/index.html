@@ -41,9 +41,13 @@
                                 <td><span>{{ 5 }}</span></td>
                                 <td>{{ 2 }}</td>
                                 <td class="text-end">
-                                    <a href="{{ url_for('view', id=book.id) }}" class="btn">Просмотр</a>
-                                    <a href="{{ url_for('edit', id=book.id) }}" class="btn">Редактирование</a>
-                                    <a class="btn">Удаление</a>
+                                    <a href="{{ url_for('view', id=book.id) }}" class="btn btn-primary">Просмотр</a>
+                                    {% if current_user.is_admin or current_user.is_moderator %}
+                                    <a href="{{ url_for('edit', id=book.id) }}" class="btn btn-warning">Редактирование</a>
+                                    {% endif %}
+                                    {% if current_user.is_admin %}
+                                    <a class="btn btn-danger">Удаление</a>
+                                    {% endif %}
                                 </td>
                             </tr>
                             <!-- конец записи -->

@@ -4,8 +4,10 @@ import datetime
 import hashlib
 import os
 import bleach
+import markdown
 from werkzeug.security import check_password_hash
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.dialects.mysql import YEAR
 import traceback
 
 app = Flask(__name__)
@@ -18,14 +20,15 @@ class Books(db.Model):
     id = db.Column(db.INT, primary_key=True) 
     name = db.Column(db.VARCHAR(100)) # VARCHAR
     description = db.Column(db.TEXT) # TEXT
-    year = db.Column(db.Date) # YEAR 
+    year = db.Column(YEAR) # YEAR 
     publishing_house = db.Column(db.VARCHAR(100)) # VARCHAR
     author = db.Column(db.VARCHAR(100)) # VARCHAR
     pages = db.Column(db.INT) # INT
-    cover = db.Column(db.INT, db.ForeignKey('covers.id')) # Внешний ключ
+    cover = db.Column(db.INT, db.ForeignKey('covers.id',ondelete='CASCADE')) # Внешний ключ
     
     reviews = db.relationship('Reviews', backref='books', uselist=True)
     genres = db.relationship('BooksAndGenres', backref='books', uselist=True)
+    cover_image = db.relationship('Covers', backref='books', uselist=False)
 
     def __repr__(self):
         return f"<books {self.id}>"
@@ -54,7 +57,7 @@ class BooksAndGenres(db.Model):
     __tablename__ = 'books_and_genres'
     
     id = db.Column(db.INT, primary_key=True) 
-    book = db.Column(db.INT, db.ForeignKey('books.id')) # Внешний ключ
+    book = db.Column(db.INT, db.ForeignKey('books.id', ondelete='CASCADE')) # Внешний ключ
     genre =  db.Column(db.INT, db.ForeignKey('genres.id')) # Внешний ключ
     
     def __repr__(self):
@@ -64,7 +67,7 @@ class Reviews(db.Model):
     __tablename__ = 'reviews'
     
     id = db.Column(db.INT, primary_key=True) 
-    book = db.Column(db.INT, db.ForeignKey('books.id')) # Внешний ключ
+    book = db.Column(db.INT, db.ForeignKey('books.id', ondelete='CASCADE')) # Внешний ключ
     user = db.Column(db.INT, db.ForeignKey('users.id')) # Внешний ключ
     grade = db.Column(db.INT) # INT
     text = db.Column(db.TEXT) # TEXT
@@ -134,13 +137,15 @@ def load_user(user_id):
 @app.route('/')
 def index():
     genres = Genres.query.all()
-    books = Books.query.order_by(Books.year).all()
+    books = Books.query.order_by(Books.year.desc()).all()
     return render_template('index.html', books=books, genres=genres)
 
 @app.route('/view/<int:id>')
 def view(id):
     book = Books.query.filter(Books.id==id).first()
-    return render_template('view.html', book=book)
+    genres = Genres.query.all()
+    html_description = markdown.markdown(book.description)
+    return render_template('view.html', book=book, genres=genres, html_description=html_description)
 
 @app.route('/edit/<int:id>', methods=['GET','POST'])
 def edit(id):
@@ -259,9 +264,11 @@ def add():
             print("Book id ", book.id)
             db.session.commit()
             
-            for genre in genres: #"проза" 
-                if genre.name in book_genres:
-                    db.session.add(BooksAndGenres(book=book.id, genre=genre.id))
+            # жанры
+            if book_genres:
+                for genre in genres: #"проза" 
+                    if genre.name in book_genres:
+                        db.session.add(BooksAndGenres(book=book.id, genre=genre.id))
             
             db.session.flush()
             db.session.commit()
@@ -311,10 +318,12 @@ def logout():
     flash('Вы успешно вышли.', 'success')
     return redirect(url_for('index'))
 
-# @app.route('/add')
-# def index():
-#     return render_template('add.html')
-
+# TODO:
+# 1. Просмотр книги
+# 2. Модалка удаление
+# 3. Рецензии создание
+# 4. Рецензии просмотр
+# 5. Рецензии модерация принять/отклонить
 # python3 -m venv ve
 # . ve/bin/activate -- Linux
 # ve\Scripts\activate -- Windows
