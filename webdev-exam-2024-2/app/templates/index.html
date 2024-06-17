@@ -40,7 +40,7 @@
                                 </td>
                                 <td> <span class="d-inline-block align-middle">{{ book.year }}</span></td>
                                 <td><span>{{ 5 }}</span></td>
-                                <td>{{ 2 }}</td>
+                                <td>{{ book.reviews | length }}</td>
                                 <td class="text-end">
                                     <a href="{{ url_for('view', id=book.id) }}" class="btn btn-primary">Просмотр</a>
                                     {% if current_user.is_admin or current_user.is_moderator %}

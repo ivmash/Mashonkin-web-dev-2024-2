@@ -1,6 +1,6 @@
 from flask import Flask, render_template, flash, request, redirect, url_for, session
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
-import datetime
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+from datetime import date
 import hashlib
 import os
 import bleach
@@ -71,7 +71,7 @@ class Reviews(db.Model):
     user = db.Column(db.INT, db.ForeignKey('users.id')) # Внешний ключ
     grade = db.Column(db.INT) # INT
     text = db.Column(db.TEXT) # TEXT
-    date = db.Column(db.Date, default = datetime.datetime.date) # DATE
+    date = db.Column(db.Date, default = date.today) # DATE
     
     def __repr__(self):
         return f"<reviews {self.id}>"
@@ -148,22 +148,62 @@ def view(id):
     print(html_description.split('\n'))
     html_description = '<br>'.join(html_description.split('\n'))
     print(html_description)
-    return render_template('view.html', book=book, genres=genres, html_description=html_description)
+    if current_user.is_authenticated and len(db.session.query(Reviews).filter(Reviews.user==current_user.id).all())==0:
+        print("Yes he can")
+        can_write_review = True
+    else:
+        print("No he can't")
+        can_write_review = False
+    return render_template('view.html', book=book, genres=genres, html_description=html_description, can_write_review=can_write_review)
+
+@app.route('/write_review/<int:id>', methods=['GET','POST'])
+@login_required
+def write_review(id):
+    if request.method == "POST":
+        try:
+            #  форма
+            grade = request.form.get('book-grade')
+            review = request.form.get('book-review')
+            review = bleach.clean(review)
+            print(grade, review)
+            
+            # отзыв для бд
+            review = Reviews(
+                book = id,
+                user = current_user.id,
+                grade = int(grade),
+                text = review
+            )
+                        
+            db.session.add(review)
+            db.session.flush()
+            db.session.commit()
+            print("Book id ", review.id)
+                    
+            return redirect(url_for('index'))
+        except Exception as e: 
+            traceback.print_exc()
+            db.session.rollback()
+            flash("При сохранении данных возникла ошибка. Проверьте корректность введённых данных.", "danger")
+            return redirect(url_for('index'))
+    else:
+        return render_template('write_review.html')
 
 @app.route('/delete/<int:id>')
-@login_required
 def delete(id):
-    try:
-        print(f"Delete {id}")
-        book = db.session.query(Books).get(id)
-        db.session.delete(book)
-        db.session.flush()
-        db.session.commit()   
-        flash("Книга успешно удалена.", "success")
-    except: 
-        traceback.print_exc()
-        db.session.rollback()
-        flash("При удалении возникла ошибка.", "danger")
+    if not current_user.is_admin: # если не админ
+        flash("Недостаточно прав для выполнения этого действия.", "danger")
+    else:
+        try:
+            book = db.session.query(Books).get(id)
+            db.session.delete(book)
+            db.session.flush()
+            db.session.commit()   
+            flash("Книга успешно удалена.", "success")
+        except: 
+            traceback.print_exc()
+            db.session.rollback()
+            flash("При удалении возникла ошибка.", "danger")
     
     return redirect(url_for('index'))
 
@@ -339,8 +379,6 @@ def logout():
     return redirect(url_for('index'))
 
 # TODO:
-# 1. Просмотр книги
-# 2. Модалка удаление
 # 3. Рецензии создание
 # 4. Рецензии просмотр
 # 5. Рецензии модерация принять/отклонить

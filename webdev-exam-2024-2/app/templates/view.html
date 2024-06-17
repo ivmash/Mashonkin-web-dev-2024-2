@@ -24,6 +24,13 @@
             {{ html_description | safe }}
         </div>
     </div>
+    {% if can_write_review %}
+    <div class="row mt-3">
+        <div class="d-flex justify-content-lg-start">
+            <a class="col-2 btn btn-dark" href="{{ url_for('write_review', id=book.id) }}">Написать рецензию</a>
+        </div>
+    </div>
+    {% endif %}
 </div>
 
 {% endblock %}

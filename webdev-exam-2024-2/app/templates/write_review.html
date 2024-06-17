@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="d-flex justify-content-center">
+    <div class="w-50">
+        <form method="POST" enctype="multipart/form-data">
+            <div class="form-group my-2">
+                <label for="book-grade">Оценка</label>
+                <select name="book-grade" class="form-control" id="book-grade">
+                    <option value="5" selected>отлично </option>
+                    <option value="4">хорошо</option>
+                    <option value="3">удовлетворительно</option>
+                    <option value="2">неудовлетворительно</option>
+                    <option value="1">плохо</option>
+                    <option value="0">ужасно</option>
+                </select>
+            </div>
+            <div class="form-group my-2">
+                <label for="book-review">Текст рецензии</label>
+                <textarea name="book-review" class="form-control" id="book-review"
+                    rows="3"></textarea>
+                <script>
+                    const easyMDE = new EasyMDE({ element: document.getElementById('book-review') });
+                </script>
+            </div>
+            
+            <input type="submit" class="btn btn-dark my-2" value="Отправить">
+        </form>
+    </div>
+</div>
+
+{% endblock %}
