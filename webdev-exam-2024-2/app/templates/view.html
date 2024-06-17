@@ -3,6 +3,7 @@
 {% block content %}
 
 <div class="container">
+
     <div class="row">
         <div class="col-6">
             <img class="w-100" src="{{ url_for('static', filename='covers/'+book.cover_image.name) }}" alt="">
@@ -21,9 +22,10 @@
                     {% endfor %}
                 {% endfor %}
             </h5>
-            {{ html_description | safe }}
+            {{ '<br>'.join(md(book.description).split('\n')) | safe }}
         </div>
     </div>
+
     {% if can_write_review %}
     <div class="row mt-3">
         <div class="d-flex justify-content-lg-start">
@@ -31,6 +33,20 @@
         </div>
     </div>
     {% endif %}
+
+    <div class="row">
+        <h4>Отзывы</h4>
+        {% if reviews | length == 0 %}
+        <p>Отзывов пока нет</p>
+        {% else %}
+            {% for review in reviews %}
+                <h6><b>{{ review.user_info.login }} ({{ review.user_info.name }} {{ review.user_info.patronymic }} {{ review.user_info.surname }})</b></h6>
+                <h6>Дата: {{ review.date }}</h6>
+                <h6>Оценка: {{ review.grade }}</h6>
+                {{ '<br>'.join(md(review.text).split('\n')) | safe }}
+            {% endfor %}
+        {% endif %}
+    </div>
 </div>
 
 {% endblock %}

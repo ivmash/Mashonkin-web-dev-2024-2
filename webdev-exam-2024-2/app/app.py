@@ -8,6 +8,7 @@ import markdown
 from werkzeug.security import check_password_hash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects.mysql import YEAR
+from sqlalchemy.sql import func
 import traceback
 
 app = Flask(__name__)
@@ -72,10 +73,15 @@ class Reviews(db.Model):
     grade = db.Column(db.INT) # INT
     text = db.Column(db.TEXT) # TEXT
     date = db.Column(db.Date, default = date.today) # DATE
+    status =  db.Column(db.INT, db.ForeignKey('statuses.id'), default = 1) # Внешний ключ
+    
+    book_info = db.relationship('Books', backref='reviewss', uselist=False)
+    user_info = db.relationship('Users', backref='reviews', uselist=False)
+    status_info = db.relationship('Statuses', backref='reviews', uselist=False)
     
     def __repr__(self):
         return f"<reviews {self.id}>"
-    
+
 class Users(db.Model, UserMixin):
     __tablename__ = 'users'
     
@@ -121,6 +127,15 @@ class Roles(db.Model):
     
     def __repr__(self):
         return f"<roles {self.id}>"
+    
+class Statuses(db.Model):
+    __tablename__ = 'statuses'
+    
+    id = db.Column(db.INT, primary_key=True) 
+    name = db.Column(db.VARCHAR(100)) # VARCHAR
+    
+    def __repr__(self):
+        return f"<statuses {self.id}>"
 
 login_manager = LoginManager()
 login_manager.login_view = 'login'
@@ -138,23 +153,22 @@ def load_user(user_id):
 def index():
     genres = Genres.query.all()
     books = Books.query.order_by(Books.year.desc()).all()
-    return render_template('index.html', books=books, genres=genres)
+    avgs = db.session.query(func.avg(Reviews.grade).label('average'), Reviews.book).group_by(Reviews.book).all()
+    reviewed_books = [avg.book for avg in avgs]
+    return render_template('index.html', books=books, genres=genres, avgs=avgs, reviewed_books=reviewed_books)
 
 @app.route('/view/<int:id>')
 def view(id):
     book = Books.query.filter(Books.id==id).first()
     genres = Genres.query.all()
-    html_description = markdown.markdown(book.description)
-    print(html_description.split('\n'))
-    html_description = '<br>'.join(html_description.split('\n'))
-    print(html_description)
+    reviews = Reviews.query.filter(Reviews.book==id).all()
+    
     if current_user.is_authenticated and len(db.session.query(Reviews).filter(Reviews.user==current_user.id).all())==0:
-        print("Yes he can")
         can_write_review = True
     else:
-        print("No he can't")
         can_write_review = False
-    return render_template('view.html', book=book, genres=genres, html_description=html_description, can_write_review=can_write_review)
+    
+    return render_template('view.html', book=book, genres=genres, reviews=reviews, can_write_review=can_write_review, md=markdown.markdown)
 
 @app.route('/write_review/<int:id>', methods=['GET','POST'])
 @login_required
@@ -188,6 +202,14 @@ def write_review(id):
             return redirect(url_for('index'))
     else:
         return render_template('write_review.html')
+
+
+@app.route('/my_reviews')
+@login_required
+def my_reviews():
+    reviews = Reviews.query.filter(Reviews.user==current_user.id).all()
+    return render_template('my_reviews.html', reviews=reviews, md=markdown.markdown) 
+    
 
 @app.route('/delete/<int:id>')
 def delete(id):
@@ -379,9 +401,8 @@ def logout():
     return redirect(url_for('index'))
 
 # TODO:
-# 3. Рецензии создание
-# 4. Рецензии просмотр
 # 5. Рецензии модерация принять/отклонить
+# 6. Мои рецензии
 # python3 -m venv ve
 # . ve/bin/activate -- Linux
 # ve\Scripts\activate -- Windows

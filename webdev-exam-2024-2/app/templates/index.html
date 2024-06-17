@@ -39,7 +39,17 @@
                                     {% endfor %}
                                 </td>
                                 <td> <span class="d-inline-block align-middle">{{ book.year }}</span></td>
-                                <td><span>{{ 5 }}</span></td>
+                                <td>
+                                    {% if book.id in reviewed_books %}
+                                        {% for avg in avgs %}
+                                            {% if avg.book == book.id%}
+                                                {{avg.average|round(1)}}
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
                                 <td>{{ book.reviews | length }}</td>
                                 <td class="text-end">
                                     <a href="{{ url_for('view', id=book.id) }}" class="btn btn-primary">Просмотр</a>

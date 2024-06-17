@@ -32,6 +32,12 @@
                     {% if current_user.is_admin %}
                     <li><a href="{{ url_for('add') }}" class="nav-link px-2 text-white">Добавление книги</a></li>
                     {% endif %}
+                    {% if current_user.is_user %}
+                    <li><a href="{{ url_for('my_reviews') }}" class="nav-link px-2 text-white">Мои рецензии</a></li>
+                    {% endif %}
+                    {% if current_user.is_moderator %}
+                    <li><a href="{{ url_for('moderate_reviews') }}" class="nav-link px-2 text-white">Модерация рецензий</a></li>
+                    {% endif %}
                 </ul>
 
                 <div class="text-end d-flex">

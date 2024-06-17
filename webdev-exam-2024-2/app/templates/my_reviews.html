@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container">
+    <div class="row">
+        {% if reviews | length == 0 %}
+        <p>Вы ещё не писали отзывов</p>
+        {% else %}
+        <div class="col-12 mb-3 mb-lg-5">
+            <div class="overflow-hidden card table-nowrap table-card">
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead class="small text-uppercase bg-body text-muted">
+                            <tr>
+                                <th>Книга</th>
+                                <th>Оценка</th>
+                                <th>Текст</th>
+                                <th class="text-end">Статус</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                            {% for review in reviews %}
+                            <!-- запись -->
+                            <tr class="align-middle">
+                                <td>{{ review.book_info.name }}</td>
+                                <td>{{ review.grade }}</td>
+                                <td>{{ '<br>'.join(md(review.text).split('\n')) | safe }}</td>
+                                <td class="text-end">{{ review.status_info.name }}</td>
+                            </tr>
+                            <!-- конец записи -->
+
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
