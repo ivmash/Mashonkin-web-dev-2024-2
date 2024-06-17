@@ -27,7 +27,7 @@
     </div>
 
     {% if can_write_review %}
-    <div class="row mt-3">
+    <div class="row my-3">
         <div class="d-flex justify-content-lg-start">
             <a class="col-2 btn btn-dark" href="{{ url_for('write_review', id=book.id) }}">Написать рецензию</a>
         </div>
@@ -37,7 +37,7 @@
     <div class="row">
         <h4>Отзывы</h4>
         {% if reviews | length == 0 %}
-        <p>Отзывов пока нет</p>
+        <p>Отзывов пока нет - станьте первым!</p>
         {% else %}
             {% for review in reviews %}
                 <h6><b>{{ review.user_info.login }} ({{ review.user_info.name }} {{ review.user_info.patronymic }} {{ review.user_info.surname }})</b></h6>

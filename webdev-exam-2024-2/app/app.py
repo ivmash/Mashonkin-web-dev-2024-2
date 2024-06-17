@@ -153,17 +153,17 @@ def load_user(user_id):
 def index():
     genres = Genres.query.all()
     books = Books.query.order_by(Books.year.desc()).all()
-    avgs = db.session.query(func.avg(Reviews.grade).label('average'), Reviews.book).group_by(Reviews.book).all()
-    reviewed_books = [avg.book for avg in avgs]
-    return render_template('index.html', books=books, genres=genres, avgs=avgs, reviewed_books=reviewed_books)
+    reviews_stats = db.session.query(func.avg(Reviews.grade).label('average'), func.count(Reviews.grade).label('count'), Reviews.book).group_by(Reviews.book).filter(Reviews.status==2).all()
+    reviewed_books = [avg.book for avg in reviews_stats]
+    return render_template('index.html', books=books, genres=genres, reviews_stats=reviews_stats, reviewed_books=reviewed_books)
 
 @app.route('/view/<int:id>')
 def view(id):
     book = Books.query.filter(Books.id==id).first()
     genres = Genres.query.all()
-    reviews = Reviews.query.filter(Reviews.book==id).all()
+    reviews = Reviews.query.filter(Reviews.book==id).filter(Reviews.status==2).all()
     
-    if current_user.is_authenticated and len(db.session.query(Reviews).filter(Reviews.user==current_user.id).all())==0:
+    if current_user.is_authenticated and len(db.session.query(Reviews).filter(Reviews.user==current_user.id).filter(Reviews.book==id).all())==0:
         can_write_review = True
     else:
         can_write_review = False
@@ -210,6 +210,21 @@ def my_reviews():
     reviews = Reviews.query.filter(Reviews.user==current_user.id).all()
     return render_template('my_reviews.html', reviews=reviews, md=markdown.markdown) 
     
+@app.route('/moderate_reviews', methods=['GET','POST'])
+@login_required
+def moderate_reviews():
+    id = request.args.get('id')
+    action = request.args.get('action')
+    if id and action:        
+        review = Reviews.query.filter(Reviews.book==id).first()
+        review.status = 2 if action=="allow" else 3
+        db.session.flush()
+        db.session.commit()
+        print(review.status, review)
+        return redirect(url_for('moderate_reviews'))
+
+    reviews = Reviews.query.filter(Reviews.status==1).all()
+    return render_template('moderate_reviews.html', reviews=reviews, md=markdown.markdown) 
 
 @app.route('/delete/<int:id>')
 def delete(id):
@@ -401,8 +416,9 @@ def logout():
     return redirect(url_for('index'))
 
 # TODO:
-# 5. Рецензии модерация принять/отклонить
-# 6. Мои рецензии
+# Пагинация 
+#  - книги
+#  - рецензии
 # python3 -m venv ve
 # . ve/bin/activate -- Linux
 # ve\Scripts\activate -- Windows
