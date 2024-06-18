@@ -216,7 +216,7 @@ def moderate_reviews():
     id = request.args.get('id')
     action = request.args.get('action')
     if id and action:        
-        review = Reviews.query.filter(Reviews.book==id).first()
+        review = Reviews.query.filter(Reviews.id==id).first()
         review.status = 2 if action=="allow" else 3
         db.session.flush()
         db.session.commit()

@@ -28,8 +28,8 @@
                                 <td>{{ review.grade }}</td>
                                 <td>{{ '<br>'.join(md(review.text).split('\n')) | safe }}</td>
                                 <td class="text-end">
-                                    <a href="{{ url_for('moderate_reviews') }}?id={{review.book}}&action=allow" class="btn btn-success">Одобрить</a>
-                                    <a href="{{url_for('moderate_reviews') }}?id={{review.book}}&action=disallow" class="btn btn-danger">Отклонить</a>
+                                    <a href="{{ url_for('moderate_reviews') }}?id={{review.id}}&action=allow" class="btn btn-success">Одобрить</a>
+                                    <a href="{{url_for('moderate_reviews') }}?id={{review.id}}&action=disallow" class="btn btn-danger">Отклонить</a>
                                 </td>
                             </tr>
                             <!-- конец записи -->
