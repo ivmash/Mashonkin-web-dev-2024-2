@@ -9,6 +9,7 @@ from werkzeug.security import check_password_hash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects.mysql import YEAR
 from sqlalchemy.sql import func
+from sqlalchemy.orm import backref
 import traceback
 
 app = Flask(__name__)
@@ -25,11 +26,11 @@ class Books(db.Model):
     publishing_house = db.Column(db.VARCHAR(100)) # VARCHAR
     author = db.Column(db.VARCHAR(100)) # VARCHAR
     pages = db.Column(db.INT) # INT
-    cover = db.Column(db.INT, db.ForeignKey('covers.id',ondelete='CASCADE')) # Внешний ключ
+    cover = db.Column(db.INT, db.ForeignKey('covers.id')) # Внешний ключ
     
-    reviews = db.relationship('Reviews', backref='books', uselist=True)
-    genres = db.relationship('BooksAndGenres', backref='books', uselist=True)
-    cover_image = db.relationship('Covers', backref='books', uselist=False)
+    reviews = db.relationship('Reviews', backref="books", uselist=True)
+    genres = db.relationship('BooksAndGenres', backref="books", uselist=True)
+    cover_image = db.relationship('Covers', backref="books", uselist=False)
 
     def __repr__(self):
         return f"<books {self.id}>"
@@ -150,12 +151,30 @@ def load_user(user_id):
 
 
 @app.route('/')
-def index():
+@app.route('/<int:page>')
+def index(page=1):
     genres = Genres.query.all()
     books = Books.query.order_by(Books.year.desc()).all()
+    if page:
+        page-=1 # переходим к индексам
+        pages_count = (len(books)//10)
+        if page > pages_count:
+            flash("Данной страницы не существует", 'danger')
+            print("Данной страницы не существует")
+            print(page, pages_count)
+            return redirect(url_for('index'))
+        max_index = (page+1)*10 if ((page+1)*10 <= len(books)) else len(books)
+        books = books[page*10 : max_index]
+        print("Страница существует")
+        print(page*10, max_index)
+        page+=1 # возвращаемся к ссылкам
+        pagination = {
+            'prev': url_for('index', page=(page-1)) if page-1 >=1 else 1,
+            'next': url_for('index', page=(page+1)) if page+1 <=pages_count else pages_count
+        }
     reviews_stats = db.session.query(func.avg(Reviews.grade).label('average'), func.count(Reviews.grade).label('count'), Reviews.book).group_by(Reviews.book).filter(Reviews.status==2).all()
     reviewed_books = [avg.book for avg in reviews_stats]
-    return render_template('index.html', books=books, genres=genres, reviews_stats=reviews_stats, reviewed_books=reviewed_books)
+    return render_template('index.html', books=books, genres=genres, reviews_stats=reviews_stats, reviewed_books=reviewed_books, pagination=pagination)
 
 @app.route('/view/<int:id>')
 def view(id):
